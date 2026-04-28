@@ -1,2 +1,3 @@
-def main() -> None:
-    print("Hello from parsimathious!")
+from .grammar import ExpressionGrammar
+
+__all__ = ["ExpressionGrammar"]

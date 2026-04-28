@@ -1,5 +1,5 @@
 import math
-from parsimonious import Grammar
+from parsimonious import Grammar, ParseError
 from parsimonious.nodes import Node
 from typing import Dict, Callable
 
@@ -38,14 +38,18 @@ class ExpressionGrammar:
     def __init__(self, unary_functions: _UnaryFunctionMap = _DEFAULT_UNARY_FUNCTIONS):
         if len(unary_functions) == 0:
             raise ValueError("At least one unary function must be provided.")
-        function_names = " / ".join(f'"{name}"' for name in unary_functions.keys())
+        function_keys = list(unary_functions.keys())
+        # Sort them from longest to shortest to ensure correct parsing (e.g., "log10" before "log")
+        function_keys.sort(key=len, reverse=True)
+        function_names = " / ".join(f'"{name}"' for name in function_keys)
         self._grammar = Grammar(f"""
-            expression = term (add_op term)*
+            expression = term (add_op term)* / unary_number
             term = factor (mul_op factor)*
             factor = exp_factor (exp_op exp_factor)*
-            exp_factor = unary_op? atom
+            exp_factor = atom
             atom = number / function_call / parenthesized_expression
             function_call = function_name parenthesized_expression
+            unary_number = unary_op number
             parenthesized_expression = "(" expression ")"
             add_op = "+" / "-"
             mul_op = "*" / "/"
@@ -56,7 +60,14 @@ class ExpressionGrammar:
         """)
 
     def __call__(self, expression: str) -> Node:
-        return self._grammar.parse(expression)
+        # Strip out all spaces
+        expression = expression.replace(" ", "")
+        try:
+            return self._grammar.parse(expression)
+        except ParseError as e:
+            raise Exception(f"Syntax error at position {e.pos}: {e.text[e.pos:e.pos+20]}") from e
+        except Exception as e:
+            raise Exception(f"Error parsing expression: {e}") from e
     
 
 if __name__ == "__main__":
@@ -67,6 +78,5 @@ if __name__ == "__main__":
             if expr.lower() == "exit":
                 break
             ast = grammar(expr)
-            print(ast)
         except Exception as e:
             print(f"Error: {e}")

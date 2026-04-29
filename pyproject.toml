@@ -1,18 +1,33 @@
 [project]
 name = "parsimathious"
 version = "0.1.0"
-description = "Add your description here"
+description = "A mathematical expression parser supporting arithmetic, functions, and complex numbers"
 readme = "README.md"
+license = "MIT"
 authors = [
     { name = "Simone Sturniolo", email = "simonesturniolo@gmail.com" }
 ]
 requires-python = ">=3.11"
+keywords = ["math", "parser", "expression", "arithmetic", "complex numbers"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Text Processing :: Parsers",
+]
 dependencies = [
     "parsimonious>=0.11.0",
 ]
 
-[project.scripts]
-parsimathious = "parsimathious:main"
+[project.urls]
+Homepage = "https://github.com/stur86/parsimathious"
+Repository = "https://github.com/stur86/parsimathious"
+Issues = "https://github.com/stur86/parsimathious/issues"
 
 [build-system]
 requires = ["uv_build>=0.10.8,<0.11.0"]
@@ -26,3 +41,5 @@ dev = [
 
 [tool.taskipy.tasks]
 test = "pytest tests"
+build = "uv build"
+publish = "uv publish"

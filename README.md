@@ -1,5 +1,10 @@
 # parsimathious
 
+[![PyPI](https://img.shields.io/pypi/v/parsimathious)](https://pypi.org/project/parsimathious/)
+[![Python](https://img.shields.io/pypi/pyversions/parsimathious)](https://pypi.org/project/parsimathious/)
+[![Tests](https://github.com/stur86/parsimathious/actions/workflows/test.yml/badge.svg)](https://github.com/stur86/parsimathious/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 `parsimathious` is a simple mathematical expression parser implemented with [`parsimonious`](https://github.com/erikrose/parsimonious). It supports basic arithmetic operations, parentheses, unary functions, constants, and complex numbers.
 
 ## Installation

@@ -1,6 +1,6 @@
 [project]
 name = "parsimathious"
-version = "0.1.0"
+version = "0.1.1"
 description = "A mathematical expression parser supporting arithmetic, functions, and complex numbers"
 readme = "README.md"
 license = "MIT"
@@ -17,8 +17,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "Topic :: Scientific/Engineering :: Mathematics",
-    "Topic :: Text Processing :: Parsers",
+    "Topic :: Scientific/Engineering :: Mathematics"
 ]
 dependencies = [
     "parsimonious>=0.11.0",

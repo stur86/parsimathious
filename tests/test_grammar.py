@@ -1,10 +1,13 @@
 import pytest
+from parsimonious.nodes import Node
 from parsimathious import ExpressionGrammar
 
 class TestExpressionGrammar:
     
     @pytest.mark.parametrize("expression", [
         "3 + 4",
+        "1 + 2i",
+        "i",
         "2 * (5 - 1)",
         "10 / 2 + 6",
         "(1 + 2) * (3 + 4)",
@@ -23,14 +26,18 @@ class TestExpressionGrammar:
     ])
     def test_valid_expressions(self, expression: str):
         grammar = ExpressionGrammar()
-        assert grammar(expression) is not None, f"Failed to parse: {expression}"
+        parsed = grammar(expression)
+        assert parsed is not None, f"Failed to parse: {expression}"
+        assert isinstance(parsed, Node), f"Parsed result is not a Node: {expression}"
+        assert parsed.expr_name == "expression", f"Top-level node is not 'expression': {expression}"
 
     @pytest.mark.parametrize("expression", [
         "3 + ",
         "* 5",
         "10 / (2 +",
         "(1 + 2 * (3 + 4)",
-        "5 - - 3"
+        "5 - - 3",
+        "2ii"
     ])
     def test_invalid_expressions(self, expression: str):
         grammar = ExpressionGrammar()

@@ -47,7 +47,7 @@ class ExpressionGrammar:
             term = factor (mul_op factor)*
             factor = exp_factor (exp_op exp_factor)*
             exp_factor = atom
-            atom = number / function_call / parenthesized_expression
+            atom = function_call / parenthesized_expression / complex_number
             function_call = function_name parenthesized_expression
             unary_number = unary_op number
             parenthesized_expression = "(" expression ")"
@@ -56,6 +56,9 @@ class ExpressionGrammar:
             exp_op = "^"
             unary_op = "+" / "-"
             number = ~r"\\d+(\\.\\d+)?"
+            imaginary_unit = "i"
+            imaginary_number = number? imaginary_unit
+            complex_number = imaginary_number / number
             function_name = {function_names}
         """)
 

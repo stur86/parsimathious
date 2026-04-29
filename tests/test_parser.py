@@ -19,6 +19,7 @@ class TestExpressionParser:
         ("pi", math.pi),
         ("e", math.e),
         ("cos(0)+sin(pi/2)", 2.0),
+        ("2 + 3 * 4", 14.0),
     ])
     def test_parse_expressions(self, expression: str, expected):
         # Define text unary functions for testing
@@ -36,3 +37,10 @@ class TestExpressionParser:
         while isinstance(result, list) and len(result) > 0:
             result = result[0]
         assert result == expected, f"Expected {expected} but got {result} for expression: {expression}"
+        
+    def test_nofunction_parser(self):
+        parser = ExpressionParser(unary_functions={})
+        result = parser("3 + 4")
+        while isinstance(result, list) and len(result) > 0:
+            result = result[0]
+        assert result == 7.0, f"Expected 7.0 but got {result} for expression: 3 + 4"

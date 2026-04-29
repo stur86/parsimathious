@@ -3,10 +3,10 @@ from parsimonious import Grammar, ParseError
 from parsimonious.nodes import Node
 from typing import Dict, Callable
 
-_UnaryFunction = Callable[[float], float]
-_UnaryFunctionMap = Dict[str, _UnaryFunction]
+UnaryFunction = Callable[[float], float]
+UnaryFunctionMap = Dict[str, UnaryFunction]
 
-_DEFAULT_UNARY_FUNCTIONS: _UnaryFunctionMap = {
+_DEFAULT_UNARY_FUNCTIONS: UnaryFunctionMap = {
     "sin": math.sin,
     "cos": math.cos,
     "tan": math.tan,
@@ -35,20 +35,13 @@ _DEFAULT_UNARY_FUNCTIONS: _UnaryFunctionMap = {
 class ExpressionGrammar:
     _grammar: Grammar
     
-    def __init__(self, unary_functions: _UnaryFunctionMap = _DEFAULT_UNARY_FUNCTIONS):
-        if len(unary_functions) == 0:
-            raise ValueError("At least one unary function must be provided.")
-        function_keys = list(unary_functions.keys())
-        # Sort them from longest to shortest to ensure correct parsing (e.g., "log10" before "log")
-        function_keys.sort(key=len, reverse=True)
-        function_names = " / ".join(f'"{name}"' for name in function_keys)
-        self._grammar = Grammar(f"""
-            expression = term (add_op term)* / unary_number
+    def __init__(self, unary_functions: UnaryFunctionMap = _DEFAULT_UNARY_FUNCTIONS):
+        grammar_definition = """
+            expression = sum / unary_number
+            sum = term (add_op term)* 
             term = factor (mul_op factor)*
             factor = exp_factor (exp_op exp_factor)*
             exp_factor = atom
-            atom = function_call / parenthesized_expression / complex_number
-            function_call = function_name parenthesized_expression
             unary_number = unary_op number
             parenthesized_expression = "(" expression ")"
             add_op = "+" / "-"
@@ -56,11 +49,23 @@ class ExpressionGrammar:
             exp_op = "^"
             unary_op = "+" / "-"
             number = ~r"\\d+(\\.\\d+)?"
+            constant = "pi" / "e"
             imaginary_unit = "i"
-            imaginary_number = number? imaginary_unit
-            complex_number = imaginary_number / number
-            function_name = {function_names}
-        """)
+            imaginary_number = number imaginary_unit
+            complex_number = imaginary_number / number / imaginary_unit / constant
+        """
+        if len(unary_functions) > 0:
+            function_keys = list(unary_functions.keys())
+            # Sort them from longest to shortest to ensure correct parsing (e.g., "log10" before "log")
+            function_keys.sort(key=len, reverse=True)
+            function_names = " / ".join(f'"{name}"' for name in function_keys)
+            grammar_definition += f"""atom = function_call / parenthesized_expression / complex_number
+            function_call = function_name parenthesized_expression
+            function_name = {function_names}"""
+        else:
+            grammar_definition += "atom = parenthesized_expression / complex_number"
+
+        self._grammar = Grammar(grammar_definition)
 
     def __call__(self, expression: str) -> Node:
         # Strip out all spaces

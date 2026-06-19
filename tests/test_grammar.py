@@ -22,7 +22,12 @@ class TestExpressionGrammar:
         "acos(1) + atan(1)",
         "asinh(0) + acosh(1)",
         "atanh(0) + sec(0)",
-        "csc(0) + cot(1)"
+        "csc(0) + cot(1)",
+        "-3",
+        "5 - -3",
+        "exp(-1)",
+        "2 * -3",
+        "(-3) ^ 2",
     ])
     def test_valid_expressions(self, expression: str):
         grammar = ExpressionGrammar()
@@ -36,7 +41,7 @@ class TestExpressionGrammar:
         "* 5",
         "10 / (2 +",
         "(1 + 2 * (3 + 4)",
-        "5 - - 3",
+        "+-3",
         "2ii"
     ])
     def test_invalid_expressions(self, expression: str):
@@ -49,6 +54,8 @@ class TestExpressionGrammar:
         "x + y",
         "2 * x + 1",
         "sin(x) + y",
+        "exp(-x)",
+        "exp(-x * y) * cos(x)",
     ])
     def test_valid_expressions_with_variables(self, expression: str):
         grammar = ExpressionGrammar(variable_names=["x", "y"])

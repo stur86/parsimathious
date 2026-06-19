@@ -80,3 +80,38 @@ class TestExpressionParser:
     def test_imaginary_unit_name_as_variable_raises(self):
         with pytest.raises(ValueError, match="imaginary"):
             ExpressionParser(variable_names=["i"])
+
+    def test_unary_minus_on_plain_number(self):
+        parser = ExpressionParser()
+        result = parser("-3")
+        while isinstance(result, list) and len(result) > 0:
+            result = result[0]
+        assert result == -3.0
+
+    def test_unary_minus_on_variable(self):
+        parser = ExpressionParser(variable_names=["x"])
+        result = parser("-x", variables={"x": 3.0})
+        while isinstance(result, list) and len(result) > 0:
+            result = result[0]
+        assert result == -3.0
+
+    def test_double_minus_evaluates_as_subtracting_negative(self):
+        parser = ExpressionParser()
+        result = parser("5 - -3")
+        while isinstance(result, list) and len(result) > 0:
+            result = result[0]
+        assert result == 8.0
+
+    def test_unary_minus_on_variable_inside_function_call(self):
+        # Regression test: "exp(-b * x)" used to fail to parse because the
+        # grammar only supported a unary minus in front of a literal number
+        # at the very start of the whole expression, not in front of a
+        # variable nested inside a function call's argument.
+        parser = ExpressionParser(variable_names=["a", "b", "c", "d", "x"])
+        result = parser(
+            "a * exp(-b * x) * cos(c * x + d)",
+            variables={"a": 1.0, "b": 1.0, "c": 1.0, "d": 0.0, "x": 0.0},
+        )
+        while isinstance(result, list) and len(result) > 0:
+            result = result[0]
+        assert result == pytest.approx(1.0)

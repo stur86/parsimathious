@@ -61,7 +61,18 @@ class ExpressionVisitor(NodeVisitor):
                 raise ValueError(f"Unexpected operator in factor: {op.text}")
             base = base ** exponent
         return base
-    
+
+    def visit_signed_factor(self, node, visited_children):
+        sign_group, factor_value = visited_children
+        # The optional unary_op is visited as a one-element list when present, or
+        # (via generic_visit's `visited_children or node` fallback) the raw,
+        # childless quantifier Node when absent.
+        if not isinstance(sign_group, list) or not sign_group:
+            return factor_value
+        [[sign]] = sign_group
+        return -factor_value if sign.text == "-" else factor_value
+
+
     def visit_term(self, node, visited_children):
         result = visited_children[0]
         for [op], factor in visited_children[1]:

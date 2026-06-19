@@ -53,13 +53,17 @@ class ExpressionGrammar:
         if "i" in constants or "i" in variable_names:
             raise ValueError('"i" is reserved for the imaginary unit and cannot be used as a constant or variable name')
 
+        # "expression = sum / unreachable" is not a typo: a OneOf with two alternatives is
+        # how parsimonious is kept from collapsing the "expression" rule into a bare alias
+        # for "sum" (which would rename the root node to "sum" and drop "expression").
         grammar_definition = """
-            expression = sum / unary_number
+            expression = sum / unreachable
+            unreachable = ~r"(?!)"
             sum = term (add_op term)*
-            term = factor (mul_op factor)*
+            term = signed_factor (mul_op signed_factor)*
+            signed_factor = unary_op? factor
             factor = exp_factor (exp_op exp_factor)*
             exp_factor = atom
-            unary_number = unary_op number
             parenthesized_expression = "(" expression ")"
             add_op = "+" / "-"
             mul_op = "*" / "/"

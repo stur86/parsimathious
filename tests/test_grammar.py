@@ -43,3 +43,21 @@ class TestExpressionGrammar:
         grammar = ExpressionGrammar()
         with pytest.raises(Exception, match="Syntax error"):
             grammar(expression)
+
+    @pytest.mark.parametrize("expression", [
+        "x",
+        "x + y",
+        "2 * x + 1",
+        "sin(x) + y",
+    ])
+    def test_valid_expressions_with_variables(self, expression: str):
+        grammar = ExpressionGrammar(variable_names=["x", "y"])
+        parsed = grammar(expression)
+        assert parsed is not None, f"Failed to parse: {expression}"
+        assert isinstance(parsed, Node), f"Parsed result is not a Node: {expression}"
+        assert parsed.expr_name == "expression", f"Top-level node is not 'expression': {expression}"
+
+    def test_unknown_variable_is_invalid(self):
+        grammar = ExpressionGrammar(variable_names=["x"])
+        with pytest.raises(Exception, match="Syntax error"):
+            grammar("z")

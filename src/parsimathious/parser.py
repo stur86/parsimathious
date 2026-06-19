@@ -7,10 +7,13 @@ from .grammar import ExpressionGrammar, UnaryFunctionMap, _DEFAULT_UNARY_FUNCTIO
 
 
 class ExpressionVisitor(NodeVisitor):
+    unwrapped_exceptions = (ValueError,)
+
     def __init__(self, unary_functions: UnaryFunctionMap):
         super().__init__()
         self._unary_functions = unary_functions
-        
+        self._variable_values: dict[str, float | complex] = {}
+
     def visit_complex_number(self, node, visited_children):
         return visited_children[0]
         
@@ -36,7 +39,13 @@ class ExpressionVisitor(NodeVisitor):
             return constant_map[node.text]
         except KeyError:
             raise ValueError(f"Unknown constant: {node.text}")
-    
+
+    def visit_variable(self, node, visited_children):
+        try:
+            return self._variable_values[node.text]
+        except KeyError:
+            raise ValueError(f"No value provided for variable: {node.text}")
+
     def visit_atom(self, node, visited_children):
         return visited_children[0]
     
@@ -93,14 +102,20 @@ class ExpressionVisitor(NodeVisitor):
         return visited_children or node
     
 class ExpressionParser:
-    def __init__(self, unary_functions: UnaryFunctionMap = _DEFAULT_UNARY_FUNCTIONS):
+    def __init__(
+        self,
+        unary_functions: UnaryFunctionMap = _DEFAULT_UNARY_FUNCTIONS,
+        variable_names: Sequence[str] = (),
+    ):
         """
-        Initialize the ExpressionParser with optional unary functions.
+        Initialize the ExpressionParser with optional unary functions and variable names.
 
         Args:
             unary_functions (UnaryFunctionMap): A dictionary mapping function names to their implementations.
+            variable_names (Sequence[str]): Names of variables that may appear in expressions. Their values
+                are supplied at evaluation time rather than at construction time.
         """
-        self._grammar = ExpressionGrammar(unary_functions)
+        self._grammar = ExpressionGrammar(unary_functions, variable_names)
         self._visitor = ExpressionVisitor(unary_functions)
 
     def compute_ast(self, expression: str) -> Node:
@@ -114,17 +129,23 @@ class ExpressionParser:
         """
         return self._grammar(expression)
     
-    def eval_ast(self, ast: Node) -> float | complex:
+    def eval_ast(self, ast: Node, variables: dict[str, float | complex] | None = None) -> float | complex:
         """Evaluate the given abstract syntax tree (AST) and return the result.
-        
+
         Args:
             ast (Node): The abstract syntax tree (AST) to evaluate.
-        
+            variables (dict[str, float | complex] | None): Values for any variable names declared on
+                construction. Only needed if the expression references variables.
+
         Returns:
             float | complex: The result of evaluating the AST.
         """
-        return self._visitor.visit(ast)
-    
-    def __call__(self, expression: str) -> float | complex:
+        self._visitor._variable_values = variables or {}
+        try:
+            return self._visitor.visit(ast)
+        finally:
+            self._visitor._variable_values = {}
+
+    def __call__(self, expression: str, variables: dict[str, float | complex] | None = None) -> float | complex:
         ast = self.compute_ast(expression)
-        return self.eval_ast(ast)
+        return self.eval_ast(ast, variables)

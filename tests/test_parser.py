@@ -44,3 +44,24 @@ class TestExpressionParser:
         while isinstance(result, list) and len(result) > 0:
             result = result[0]
         assert result == 7.0, f"Expected 7.0 but got {result} for expression: 3 + 4"
+
+    def test_variable_substitution(self):
+        parser = ExpressionParser(variable_names=["x", "y"])
+        result = parser("x + y * 2", variables={"x": 1.0, "y": 3.0})
+        while isinstance(result, list) and len(result) > 0:
+            result = result[0]
+        assert result == 7.0, f"Expected 7.0 but got {result}"
+
+    def test_variable_missing_value_raises(self):
+        parser = ExpressionParser(variable_names=["x"])
+        with pytest.raises(ValueError, match="x"):
+            parser("x")
+
+    def test_variable_value_is_reset_between_calls(self):
+        parser = ExpressionParser(variable_names=["x"])
+        first = parser("x", variables={"x": 5.0})
+        while isinstance(first, list) and len(first) > 0:
+            first = first[0]
+        assert first == 5.0
+        with pytest.raises(ValueError, match="x"):
+            parser("x")

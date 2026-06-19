@@ -1,7 +1,7 @@
 import math
 from parsimonious import Grammar, ParseError
 from parsimonious.nodes import Node
-from typing import Dict, Callable
+from typing import Dict, Callable, Sequence
 
 UnaryFunction = Callable[[float], float]
 UnaryFunctionMap = Dict[str, UnaryFunction]
@@ -35,10 +35,10 @@ _DEFAULT_UNARY_FUNCTIONS: UnaryFunctionMap = {
 class ExpressionGrammar:
     _grammar: Grammar
     
-    def __init__(self, unary_functions: UnaryFunctionMap = _DEFAULT_UNARY_FUNCTIONS):
+    def __init__(self, unary_functions: UnaryFunctionMap = _DEFAULT_UNARY_FUNCTIONS, variable_names: Sequence[str] = ()):
         grammar_definition = """
             expression = sum / unary_number
-            sum = term (add_op term)* 
+            sum = term (add_op term)*
             term = factor (mul_op factor)*
             factor = exp_factor (exp_op exp_factor)*
             exp_factor = atom
@@ -52,8 +52,19 @@ class ExpressionGrammar:
             constant = "pi" / "e"
             imaginary_unit = "i"
             imaginary_number = number imaginary_unit
-            complex_number = imaginary_number / number / imaginary_unit / constant
         """
+        if len(variable_names) > 0:
+            # Sort them from longest to shortest to ensure correct parsing (e.g., "xy" before "x")
+            sorted_variable_names = sorted(variable_names, key=len, reverse=True)
+            variable_alternatives = " / ".join(f'"{name}"' for name in sorted_variable_names)
+            grammar_definition += f"""
+            variable = {variable_alternatives}
+            complex_number = imaginary_number / number / imaginary_unit / constant / variable
+            """
+        else:
+            grammar_definition += """
+            complex_number = imaginary_number / number / imaginary_unit / constant
+            """
         if len(unary_functions) > 0:
             function_keys = list(unary_functions.keys())
             # Sort them from longest to shortest to ensure correct parsing (e.g., "log10" before "log")

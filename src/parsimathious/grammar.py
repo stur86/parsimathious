@@ -1,10 +1,16 @@
 import math
 from parsimonious import Grammar, ParseError
 from parsimonious.nodes import Node
-from typing import Dict, Callable
+from typing import Dict, Callable, Sequence
 
 UnaryFunction = Callable[[float], float]
 UnaryFunctionMap = Dict[str, UnaryFunction]
+ConstantMap = Dict[str, float | complex]
+
+_DEFAULT_CONSTANTS: ConstantMap = {
+    "pi": math.pi,
+    "e": math.e,
+}
 
 _DEFAULT_UNARY_FUNCTIONS: UnaryFunctionMap = {
     "sin": math.sin,
@@ -35,10 +41,21 @@ _DEFAULT_UNARY_FUNCTIONS: UnaryFunctionMap = {
 class ExpressionGrammar:
     _grammar: Grammar
     
-    def __init__(self, unary_functions: UnaryFunctionMap = _DEFAULT_UNARY_FUNCTIONS):
+    def __init__(
+        self,
+        unary_functions: UnaryFunctionMap = _DEFAULT_UNARY_FUNCTIONS,
+        variable_names: Sequence[str] = (),
+        constants: ConstantMap = _DEFAULT_CONSTANTS,
+    ):
+        overlap = set(constants) & set(variable_names)
+        if overlap:
+            raise ValueError(f"Names cannot be used as both constants and variables: {', '.join(sorted(overlap))}")
+        if "i" in constants or "i" in variable_names:
+            raise ValueError('"i" is reserved for the imaginary unit and cannot be used as a constant or variable name')
+
         grammar_definition = """
             expression = sum / unary_number
-            sum = term (add_op term)* 
+            sum = term (add_op term)*
             term = factor (mul_op factor)*
             factor = exp_factor (exp_op exp_factor)*
             exp_factor = atom
@@ -49,10 +66,28 @@ class ExpressionGrammar:
             exp_op = "^"
             unary_op = "+" / "-"
             number = ~r"\\d+(\\.\\d+)?"
-            constant = "pi" / "e"
             imaginary_unit = "i"
             imaginary_number = number imaginary_unit
-            complex_number = imaginary_number / number / imaginary_unit / constant
+        """
+        complex_number_alternatives = ["imaginary_number", "number", "imaginary_unit"]
+        if len(constants) > 0:
+            # Sort them from longest to shortest to ensure correct parsing (e.g., "log10" before "log")
+            sorted_constant_names = sorted(constants.keys(), key=len, reverse=True)
+            constant_alternatives = " / ".join(f'"{name}"' for name in sorted_constant_names)
+            grammar_definition += f"""
+            constant = {constant_alternatives}
+            """
+            complex_number_alternatives.append("constant")
+        if len(variable_names) > 0:
+            # Sort them from longest to shortest to ensure correct parsing (e.g., "xy" before "x")
+            sorted_variable_names = sorted(variable_names, key=len, reverse=True)
+            variable_alternatives = " / ".join(f'"{name}"' for name in sorted_variable_names)
+            grammar_definition += f"""
+            variable = {variable_alternatives}
+            """
+            complex_number_alternatives.append("variable")
+        grammar_definition += f"""
+            complex_number = {" / ".join(complex_number_alternatives)}
         """
         if len(unary_functions) > 0:
             function_keys = list(unary_functions.keys())

@@ -43,3 +43,45 @@ class TestExpressionGrammar:
         grammar = ExpressionGrammar()
         with pytest.raises(Exception, match="Syntax error"):
             grammar(expression)
+
+    @pytest.mark.parametrize("expression", [
+        "x",
+        "x + y",
+        "2 * x + 1",
+        "sin(x) + y",
+    ])
+    def test_valid_expressions_with_variables(self, expression: str):
+        grammar = ExpressionGrammar(variable_names=["x", "y"])
+        parsed = grammar(expression)
+        assert parsed is not None, f"Failed to parse: {expression}"
+        assert isinstance(parsed, Node), f"Parsed result is not a Node: {expression}"
+        assert parsed.expr_name == "expression", f"Top-level node is not 'expression': {expression}"
+
+    def test_unknown_variable_is_invalid(self):
+        grammar = ExpressionGrammar(variable_names=["x"])
+        with pytest.raises(Exception, match="Syntax error"):
+            grammar("z")
+
+    def test_custom_constant_is_valid(self):
+        grammar = ExpressionGrammar(constants={"tau": 6.283185307179586})
+        parsed = grammar("tau")
+        assert parsed is not None
+        assert isinstance(parsed, Node)
+        assert parsed.expr_name == "expression"
+
+    def test_default_constants_unavailable_when_overridden(self):
+        grammar = ExpressionGrammar(constants={"tau": 6.283185307179586})
+        with pytest.raises(Exception, match="Syntax error"):
+            grammar("pi")
+
+    def test_overlapping_constant_and_variable_names_raises(self):
+        with pytest.raises(ValueError, match="x"):
+            ExpressionGrammar(variable_names=["x"], constants={"x": 1.0})
+
+    def test_imaginary_unit_name_as_constant_raises(self):
+        with pytest.raises(ValueError, match="imaginary"):
+            ExpressionGrammar(constants={"i": 1.0})
+
+    def test_imaginary_unit_name_as_variable_raises(self):
+        with pytest.raises(ValueError, match="imaginary"):
+            ExpressionGrammar(variable_names=["i"])

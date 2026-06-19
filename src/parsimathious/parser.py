@@ -94,9 +94,37 @@ class ExpressionVisitor(NodeVisitor):
     
 class ExpressionParser:
     def __init__(self, unary_functions: UnaryFunctionMap = _DEFAULT_UNARY_FUNCTIONS):
+        """
+        Initialize the ExpressionParser with optional unary functions.
+
+        Args:
+            unary_functions (UnaryFunctionMap): A dictionary mapping function names to their implementations.
+        """
         self._grammar = ExpressionGrammar(unary_functions)
         self._visitor = ExpressionVisitor(unary_functions)
+
+    def compute_ast(self, expression: str) -> Node:
+        """Compute the abstract syntax tree (AST) for the given expression.
+        
+        Args:
+            expression (str): The mathematical expression to parse.
+        
+        Returns:
+            Node: The abstract syntax tree (AST) representing the expression.
+        """
+        return self._grammar(expression)
+    
+    def eval_ast(self, ast: Node) -> float | complex:
+        """Evaluate the given abstract syntax tree (AST) and return the result.
+        
+        Args:
+            ast (Node): The abstract syntax tree (AST) to evaluate.
+        
+        Returns:
+            float | complex: The result of evaluating the AST.
+        """
+        return self._visitor.visit(ast)
     
     def __call__(self, expression: str) -> float | complex:
-        ast = self._grammar(expression)
-        return self._visitor.visit(ast)
+        ast = self.compute_ast(expression)
+        return self.eval_ast(ast)

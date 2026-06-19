@@ -1,6 +1,6 @@
 [project]
 name = "parsimathious"
-version = "0.1.1"
+version = "0.2.0"
 description = "A mathematical expression parser supporting arithmetic, functions, and complex numbers"
 readme = "README.md"
 license = "MIT"
